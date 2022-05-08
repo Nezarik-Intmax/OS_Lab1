@@ -3,7 +3,7 @@
 #include <iostream>
 #include "string"
 #include <Windows.h>
-#include <queue>
+#include <list>
 
 using namespace std;
 void gotoxy(int xpos, int ypos){
@@ -17,6 +17,7 @@ public:
     int duration;
     int priority;
     int delay;
+    int id;
     bool finished;
     process(){
         duration = 0;
@@ -25,6 +26,13 @@ public:
         finished = false;
     }
     process(int d, int p, int dy){
+        duration = d;
+        priority = p;
+        delay = dy;
+        finished = false;
+    }
+    process(int _id, int d, int p, int dy){
+        id = _id;
         duration = d;
         priority = p;
         delay = dy;
@@ -74,74 +82,49 @@ void FIFS(process* prs, const int N){
 
     }
 }
-void RB(queue<process> prs, const int N, const int period, const int top_offset){
+void RB(list<process> prs, const int N, const int period, const int top_offset){
     cout << "Round Robin (" << period << "):\n";
-    process tmp;
-    for(int i = 0; i < N; i++){
-        tmp = prs.front();
-        cout << tmp.duration << " ";
-        cout << tmp.priority << " ";
-        cout << tmp.delay << "\n";
-        prs.push(tmp);
-        prs.pop();
+    for(list<process>::iterator it = prs.begin(); it != prs.end(); it++){
+        cout << it->duration << " ";
+        cout << it->priority << " ";
+        cout << it->delay << "\n";
     }
     int tick = 0;
-    int top_offset_modificator = 0;
-    while(1){
+    int periodNum = 0;
+    bool deleted = false;
+    while(!prs.empty()){
         int newPeriod = period;
-        tmp = prs.front();
-        for(int j = 0; j < period; j++){
-            gotoxy(20 + tick + tick * period + j, 1 + top_offset + top_offset_modificator);
+        list<process>::iterator it = prs.begin();
+        for(int j = period - 1; j >= 0; j--){
+            gotoxy(20 + tick + periodNum, 1 + it->id + top_offset);
             cout << "И";
-            tmp.duration--;
-            if(tmp.duration == 0){
-                tmp.finished = true;
-                newPeriod = j + 1;
+            it->duration--;
+            tick++;
+            if(it->duration == 0){
+                newPeriod = period - j;
                 break;
             }
         }
-        prs.push(tmp);
-        prs.pop();
-        for(int i = 1; i < N - top_offset_modificator; i++){
-            tmp = prs.front();
-            for(int j = 0; j < newPeriod; j++){
-                if(!tmp.finished && (tmp.delay <= tick)){
-                    gotoxy(20 + tick  + tick * period + j, i + 1 + top_offset + top_offset_modificator);
+        if(it->duration == 0){
+            it = prs.erase(it);
+            deleted = true;
+        }else{
+            it++;
+        }
+        if(!prs.empty()){
+            for(; it != prs.end(); it++){
+                for(int j = newPeriod; j > 0; j--){
+                    gotoxy(20 + tick + periodNum - j, it->id + 1 + top_offset);
                     cout << "Г";
                 }
             }
-            prs.push(tmp);
-            prs.pop();
-        }
-        for(int i = N - top_offset_modificator; i < N; i++){
-            tmp = prs.front();
-            for(int j = 0; j < newPeriod; j++){
-                if(!tmp.finished && (tmp.delay <= tick)){
-                    gotoxy(20 + tick + tick * period + j, i + 1 + top_offset - N + top_offset_modificator);
-                    cout << "Г";
-                }
+            if(!deleted){
+                prs.push_back(prs.front());
+                prs.pop_front();
             }
-            prs.push(tmp);
-            prs.pop();
+            deleted = false;
         }
-        tmp = prs.front();
-        prs.push(tmp);
-        prs.pop();
-        top_offset_modificator += 1;
-        if(top_offset_modificator == N)
-            top_offset_modificator = 0;
-        tick++;
-        bool stop = true;
-        for(int i = 0; i < N; i++){
-            tmp = prs.front();
-            if(tmp.finished == false){
-                stop = false;
-                break;
-            }
-            prs.push(tmp);
-            prs.pop();
-        }
-        if(stop) break;
+        periodNum++;
     }
 }
 int main(){
@@ -150,11 +133,11 @@ int main(){
     process prs[N] = {process(3, 0 ,0), process(1, 0 ,0), process(2, 0 ,0), process(4, 1 ,1)};
     FIFS(prs, N);
     cout << "\n\n";
-    queue<process> prs2;
-    prs2.push(process(4, 0, 0));
-    prs2.push(process(1, 0, 0));
-    prs2.push(process(3, 0, 0));
-    prs2.push(process(5, 0, 0));
+    list<process> prs2;
+    prs2.push_back(process(0, 4, 0, 0));
+    prs2.push_back(process(1, 1, 0, 0));
+    prs2.push_back(process(2, 3, 0, 0));
+    prs2.push_back(process(3, 5, 0, 0));
     //process prs2[N] = {process(4, 0, 0), process(1, 0, 0), process(3, 0, 0), process(5, 0, 0)};
     RB(prs2, prs2.size(), 2, 5);
     gotoxy(0, 20);
