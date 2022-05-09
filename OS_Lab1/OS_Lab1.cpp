@@ -49,6 +49,9 @@ void FIFS(process* prs, const int N){
         cout << prs[i].delay << "\n";
     }
     int tick = 0;
+    int waiting_time = 0;
+    int proccess_time = 0;
+    int proccess_num = N;
     while(1){
         int highPr = -1;
         int highPrInd = 0;
@@ -62,12 +65,14 @@ void FIFS(process* prs, const int N){
             if(i == highPrInd){
                 gotoxy(20 + tick * 2, i + 1);
                 cout << "И";
+                proccess_time++;
                 prs[i].duration--;
                 if(prs[i].duration == 0) prs[i].finished = true;
             } else{
                 if(!prs[i].finished && (prs[i].delay <= tick)){
                     gotoxy(20 + tick * 2, i + 1);
                     cout << "Г";
+                    waiting_time++;
                 }
             }
         }
@@ -82,6 +87,10 @@ void FIFS(process* prs, const int N){
         if(stop) break;
 
     }
+    gotoxy(50, 2);
+    cout << "Среднее время ожидания: " << ((float)waiting_time / (float)proccess_num);
+    gotoxy(50, 3);
+    cout << "Среднее полное время выполнения : " << ((float)(proccess_time + waiting_time) / (float)proccess_num);
 }
 void RB(list<process> prs, const int period, const int top_offset){
     cout << "Round Robin (" << period << "):\n";
@@ -93,11 +102,15 @@ void RB(list<process> prs, const int period, const int top_offset){
     int tick = 0;
     int periodNum = 0;
     bool deleted = false;
+    int waiting_time = 0;
+    int proccess_time = 0;
+    int proccess_num = prs.size();
     while(!prs.empty()){
         for(int j = period - 1; j >= 0; j--){
             list<process>::iterator it = prs.begin();
             gotoxy(20 + tick + periodNum, 1 + it->id + top_offset);
             cout << "И";
+            proccess_time++;
             it->duration--;
             if(it->duration == 0){
                 it = prs.erase(it);
@@ -109,6 +122,7 @@ void RB(list<process> prs, const int period, const int top_offset){
                 for(; it != prs.end(); it++){
                     gotoxy(20 + tick + periodNum, it->id + 1 + top_offset);
                     cout << "Г";
+                    waiting_time++;
                 }
             }
             tick++;
@@ -123,26 +137,32 @@ void RB(list<process> prs, const int period, const int top_offset){
         deleted = false;
         periodNum++;
     }
+    gotoxy(50, top_offset + 2);
+    cout << "Среднее время ожидания: " << ((float)waiting_time / (float)proccess_num);
+    gotoxy(50, top_offset + 3);
+    cout << "Среднее полное время выполнения : " << ((float)(proccess_time + waiting_time) / (float)proccess_num);
 }
 bool compare_(const process& first, const process& second){
     return (first.duration < second.duration);
 }
 void SJF(list<process> prs, const int top_offset){
     gotoxy(0, top_offset);
-    prs.sort(compare_);
     cout << "SJF:\n";
+    int waiting_time = 0;
+    int proccess_time = 0;
+    int proccess_num = prs.size();
     for(list<process>::iterator it = prs.begin(); it != prs.end(); it++){
         cout << it->duration << " ";
         cout << it->priority << " ";
         cout << it->delay << "\n";
     }
+    prs.sort(compare_);
     int tick = 0;
-    int periodNum = 0;
-    bool deleted = false;
     while(!prs.empty()){
         list<process>::iterator it = prs.begin();
-        gotoxy(20 + tick + periodNum, 1 + it->id + top_offset);
+        gotoxy(20 + tick*2, 1 + it->id + top_offset);
         cout << "И";
+        proccess_time++;
         it->duration--;
         if(it->duration == 0){
             it = prs.erase(it);
@@ -151,19 +171,23 @@ void SJF(list<process> prs, const int top_offset){
         }
         if(!prs.empty()){
             for(; it != prs.end(); it++){
-                gotoxy(20 + tick + periodNum, it->id + 1 + top_offset);
+                gotoxy(20 + tick*2, it->id + 1 + top_offset);
                 cout << "Г";
+                waiting_time++;
             }
         }
         tick++;
-        periodNum++;
     }
+    gotoxy(50, top_offset+2);
+    cout << "Среднее время ожидания: " << ((float)waiting_time / (float)proccess_num);
+    gotoxy(50, top_offset+3);
+    cout << "Среднее полное время выполнения : " << ((float)(proccess_time + waiting_time) / (float)proccess_num);
 
 }
 int main(){
     setlocale(0, "rus");
     const int N = 4;
-    process prs[N] = {process(3, 0 ,0), process(1, 0 ,0), process(2, 0 ,0), process(4, 1 ,1)};
+    process prs[N] = {process(3, 0 ,0), process(1, 0 ,0), process(5, 0 ,0), process(4, 1 ,1)};
     FIFS(prs, N);
     cout << "\n\n";
     list<process> prs2;
@@ -172,7 +196,7 @@ int main(){
     prs2.push_back(process(2, 3, 0, 0));
     prs2.push_back(process(3, 5, 0, 0));
     //process prs2[N] = {process(4, 0, 0), process(1, 0, 0), process(3, 0, 0), process(5, 0, 0)};
-    RB(prs2, 2, 5);
+    RB(prs2, 3, 5);
     gotoxy(0, 20);
     list<process> prs3;
     prs3.push_back(process(0, 4, 0, 0));
