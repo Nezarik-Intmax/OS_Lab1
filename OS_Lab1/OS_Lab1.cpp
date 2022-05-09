@@ -4,6 +4,7 @@
 #include "string"
 #include <Windows.h>
 #include <list>
+#include <algorithm>
 
 using namespace std;
 void gotoxy(int xpos, int ypos){
@@ -82,7 +83,7 @@ void FIFS(process* prs, const int N){
 
     }
 }
-void RB(list<process> prs, const int N, const int period, const int top_offset){
+void RB(list<process> prs, const int period, const int top_offset){
     cout << "Round Robin (" << period << "):\n";
     for(list<process>::iterator it = prs.begin(); it != prs.end(); it++){
         cout << it->duration << " ";
@@ -93,39 +94,71 @@ void RB(list<process> prs, const int N, const int period, const int top_offset){
     int periodNum = 0;
     bool deleted = false;
     while(!prs.empty()){
-        int newPeriod = period;
-        list<process>::iterator it = prs.begin();
         for(int j = period - 1; j >= 0; j--){
+            list<process>::iterator it = prs.begin();
             gotoxy(20 + tick + periodNum, 1 + it->id + top_offset);
             cout << "И";
             it->duration--;
-            tick++;
             if(it->duration == 0){
-                newPeriod = period - j;
+                it = prs.erase(it);
+                deleted = true;
+            } else{
+                it++;
+            }
+            if(!prs.empty()){
+                for(; it != prs.end(); it++){
+                    gotoxy(20 + tick + periodNum, it->id + 1 + top_offset);
+                    cout << "Г";
+                }
+            }
+            tick++;
+            if(deleted){
                 break;
             }
         }
+        if(!deleted){
+            prs.push_back(prs.front());
+            prs.pop_front();
+        }
+        deleted = false;
+        periodNum++;
+    }
+}
+bool compare_(const process& first, const process& second){
+    return (first.duration < second.duration);
+}
+void SJF(list<process> prs, const int top_offset){
+    gotoxy(0, top_offset);
+    prs.sort(compare_);
+    cout << "SJF:\n";
+    for(list<process>::iterator it = prs.begin(); it != prs.end(); it++){
+        cout << it->duration << " ";
+        cout << it->priority << " ";
+        cout << it->delay << "\n";
+    }
+    int tick = 0;
+    int periodNum = 0;
+    bool deleted = false;
+    while(!prs.empty()){
+        list<process>::iterator it = prs.begin();
+        gotoxy(20 + tick + periodNum, 1 + it->id + top_offset);
+        cout << "И";
+        it->duration--;
         if(it->duration == 0){
             it = prs.erase(it);
-            deleted = true;
-        }else{
+        } else{
             it++;
         }
         if(!prs.empty()){
             for(; it != prs.end(); it++){
-                for(int j = newPeriod; j > 0; j--){
-                    gotoxy(20 + tick + periodNum - j, it->id + 1 + top_offset);
-                    cout << "Г";
-                }
+                gotoxy(20 + tick + periodNum, it->id + 1 + top_offset);
+                cout << "Г";
             }
-            if(!deleted){
-                prs.push_back(prs.front());
-                prs.pop_front();
-            }
-            deleted = false;
         }
+        tick++;
         periodNum++;
     }
+
 }
 int main(){
     setlocale(0, "rus");
@@ -139,6 +172,13 @@ int main(){
     prs2.push_back(process(2, 3, 0, 0));
     prs2.push_back(process(3, 5, 0, 0));
     //process prs2[N] = {process(4, 0, 0), process(1, 0, 0), process(3, 0, 0), process(5, 0, 0)};
-    RB(prs2, prs2.size(), 2, 5);
+    RB(prs2, 2, 5);
+    gotoxy(0, 20);
+    list<process> prs3;
+    prs3.push_back(process(0, 4, 0, 0));
+    prs3.push_back(process(1, 1, 0, 0));
+    prs3.push_back(process(2, 3, 0, 0));
+    prs3.push_back(process(3, 5, 0, 0));
+    SJF(prs3, 10);
     gotoxy(0, 20);
 }
