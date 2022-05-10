@@ -95,9 +95,9 @@ void FIFS(process* prs, const int N){
 void RB(list<process> prs, const int period, const int top_offset){
     cout << "Round Robin (" << period << "):\n";
     for(list<process>::iterator it = prs.begin(); it != prs.end(); it++){
-        cout << it->duration << " ";
-        cout << it->priority << " ";
-        cout << it->delay << "\n";
+        cout << it->duration << " \n";
+        /*cout << it->priority << " ";
+        cout << it->delay << "\n";*/
     }
     int tick = 0;
     int periodNum = 0;
@@ -152,9 +152,9 @@ void SJF(list<process> prs, const int top_offset){
     int proccess_time = 0;
     int proccess_num = prs.size();
     for(list<process>::iterator it = prs.begin(); it != prs.end(); it++){
-        cout << it->duration << " ";
-        cout << it->priority << " ";
-        cout << it->delay << "\n";
+        cout << it->duration << " \n";
+        /*cout << it->priority << " ";
+        cout << it->delay << "\n";*/
     }
     prs.sort(compare_);
     int tick = 0;
@@ -187,8 +187,8 @@ void SJF(list<process> prs, const int top_offset){
 int main(){
     setlocale(0, "rus");
     const int N = 4;
-    process prs[N] = {process(3, 0 ,0), process(1, 0 ,0), process(5, 0 ,0), process(4, 1 ,1)};
-    FIFS(prs, N);
+    //process prs[N] = {process(3, 0 ,0), process(1, 0 ,0), process(5, 0 ,0), process(4, 1 ,1)};
+    /*FIFS(prs, N);
     cout << "\n\n";
     list<process> prs2;
     prs2.push_back(process(0, 4, 0, 0));
@@ -204,5 +204,30 @@ int main(){
     prs3.push_back(process(2, 3, 0, 0));
     prs3.push_back(process(3, 5, 0, 0));
     SJF(prs3, 10);
+    gotoxy(0, 20);*/
+
+
+
+    list<process> proccess_list;
+    process prs[N];
+    std::FILE* stream;
+    if((stream = fopen("proccess.in", "r")) != nullptr){
+        int count = 0;
+        char s[80];
+        for(int i = 0, duration; fscanf(stream, "%d", &duration) != EOF; i++){
+            int priority, delay;
+            //fscanf(stream, "%d", &duration);
+            fscanf(stream, "%d", &priority);
+            fscanf(stream, "%d", &delay);
+            prs[i] = process(i, duration, priority, delay);
+            proccess_list.push_back(process(i, duration, priority, delay));
+        }
+        fclose(stream);
+    }
+    FIFS(prs, N);
+    cout << "\n\n";
+    RB(proccess_list, 3, 5);
+    gotoxy(0, 20);
+    SJF(proccess_list, 10);
     gotoxy(0, 20);
 }
